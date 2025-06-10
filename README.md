@@ -1,18 +1,18 @@
-# ktsu.AppDataStorage
+# ktsu.AppData
 
 > A .NET library for simple application data management with JSON serialization.
 
-[![License](https://img.shields.io/github/license/ktsu-dev/AppDataStorage.svg?label=License&logo=nuget)](LICENSE.md)
-[![NuGet Version](https://img.shields.io/nuget/v/ktsu.AppDataStorage?label=Stable&logo=nuget)](https://nuget.org/packages/ktsu.AppDataStorage)
-[![NuGet Version](https://img.shields.io/nuget/vpre/ktsu.AppDataStorage?label=Latest&logo=nuget)](https://nuget.org/packages/ktsu.AppDataStorage)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/ktsu.AppDataStorage?label=Downloads&logo=nuget)](https://nuget.org/packages/ktsu.AppDataStorage)
+[![License](https://img.shields.io/github/license/ktsu-dev/AppData.svg?label=License&logo=nuget)](LICENSE.md)
+[![NuGet Version](https://img.shields.io/nuget/v/ktsu.AppData?label=Stable&logo=nuget)](https://nuget.org/packages/ktsu.AppData)
+[![NuGet Version](https://img.shields.io/nuget/vpre/ktsu.AppData?label=Latest&logo=nuget)](https://nuget.org/packages/ktsu.AppData)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/ktsu.AppData?label=Downloads&logo=nuget)](https://nuget.org/packages/ktsu.AppData)
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/ktsu-dev/AppDataStorage?label=Commits&logo=github)](https://github.com/ktsu-dev/AppDataStorage/commits/main)
 [![GitHub contributors](https://img.shields.io/github/contributors/ktsu-dev/AppDataStorage?label=Contributors&logo=github)](https://github.com/ktsu-dev/AppDataStorage/graphs/contributors)
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/ktsu-dev/AppDataStorage/dotnet.yml?label=Build&logo=github)](https://github.com/ktsu-dev/AppDataStorage/actions)
 
 ## Introduction
 
-`ktsu.AppDataStorage` is a .NET library designed to simplify the process of managing application data. It facilitates saving and loading configuration or state data to the application's data folder, leveraging JSON serialization. The library handles file operations with safety mechanisms like automatic backups and provides an intuitive API for developers.
+`ktsu.AppData` is a .NET library designed to simplify the process of managing application data. It facilitates saving and loading configuration or state data to the application's data folder, leveraging JSON serialization. The library handles file operations with safety mechanisms like automatic backups and provides an intuitive API for developers.
 
 ## Features
 
@@ -29,19 +29,19 @@
 ### Package Manager Console
 
 ```powershell
-Install-Package ktsu.AppDataStorage
+Install-Package ktsu.AppData
 ```
 
 ### .NET CLI
 
 ```bash
-dotnet add package ktsu.AppDataStorage
+dotnet add package ktsu.AppData
 ```
 
 ### Package Reference
 
 ```xml
-<PackageReference Include="ktsu.AppDataStorage" Version="x.y.z" />
+<PackageReference Include="ktsu.AppData" Version="x.y.z" />
 ```
 
 ## Usage Examples

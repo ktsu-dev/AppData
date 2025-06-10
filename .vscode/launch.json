@@ -10,9 +10,9 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/AppDataStorage.Test/bin/Debug/net9.0/ktsu.AppDataStorage.Test.dll",
+            "program": "${workspaceFolder}/AppData.Test/bin/Debug/net9.0/ktsu.AppData.Test.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/AppDataStorage.Test",
+            "cwd": "${workspaceFolder}/AppData.Test",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false

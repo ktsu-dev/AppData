@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34316.72
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AppDataStorage", "AppDataStorage\AppDataStorage.csproj", "{E0CF2A36-DA6B-4D77-972F-8832590F7AD6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AppData", "AppData\AppData.csproj", "{E0CF2A36-DA6B-4D77-972F-8832590F7AD6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppDataStorage.Test", "AppDataStorage.Test\AppDataStorage.Test.csproj", "{769CDC53-D855-4CFF-ACED-12EB018668D3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppData.Test", "AppData.Test\AppData.Test.csproj", "{769CDC53-D855-4CFF-ACED-12EB018668D3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
