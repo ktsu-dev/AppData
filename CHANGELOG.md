@@ -1,6 +1,6 @@
 ## v1.0.0
 
-No significant changes detected since v1.0.0.
+Changes since v1.0.0:
 ## v1.0.0 (major)
 
 - Update docs and stabilize library version ([@matt-edmondson](https://github.com/matt-edmondson))
