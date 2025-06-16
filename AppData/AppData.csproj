@@ -1,13 +1,13 @@
-<Project Sdk="ktsu.Sdk.Lib">
+﻿<Project Sdk="ktsu.Sdk.Lib">
   <PropertyGroup>
     <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="ktsu.ToStringJsonConverter" />
+    <PackageReference Include="ktsu.RoundTripStringJsonConverter" />
     <PackageReference Include="ktsu.CaseConverter" />
-    <PackageReference Include="ktsu.StrongPaths" />
-    <PackageReference Include="ktsu.StrongStrings" />
+    <PackageReference Include="ktsu.Semantics" />
     <PackageReference Include="TestableIO.System.IO.Abstractions" />
     <PackageReference Include="TestableIO.System.IO.Abstractions.Wrappers" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
 </Project>
