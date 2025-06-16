@@ -1,6 +1,10 @@
-## v1.0.0
+## v1.0.1 (patch)
 
 Changes since v1.0.0:
+
+- Refine TAGS.md and update cursor rules documentation for AppData library ([@matt-edmondson](https://github.com/matt-edmondson))
+- Refactor AppData library to follow SOLID principles and enhance dependency injection support ([@matt-edmondson](https://github.com/matt-edmondson))
+- Update DESCRIPTION.md and TAGS.md for AppData library ([@matt-edmondson](https://github.com/matt-edmondson))
 ## v1.0.0 (major)
 
 - Update docs and stabilize library version ([@matt-edmondson](https://github.com/matt-edmondson))
