@@ -1,3 +1,8 @@
+## v1.0.3 (patch)
+
+Changes since v1.0.2:
+
+- Update copyright and enhance project type detection ([@matt-edmondson](https://github.com/matt-edmondson))
 ## v1.0.2 (patch)
 
 Changes since v1.0.1:
