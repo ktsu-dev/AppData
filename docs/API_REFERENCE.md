@@ -18,7 +18,7 @@ This document provides a comprehensive reference for all public APIs in the AppD
 
 The primary interface for high-level data operations.
 
-**Namespace:** `ktsu.AppDataStorage.Interfaces`
+**Namespace:** `ktsu.AppData.Interfaces`
 
 ```csharp
 public interface IAppDataRepository<T> where T : class, new()
@@ -116,7 +116,7 @@ string logContent = repository.ReadText(
 
 Interface for data serialization operations.
 
-**Namespace:** `ktsu.AppDataStorage.Interfaces`
+**Namespace:** `ktsu.AppData.Interfaces`
 
 ```csharp
 public interface IAppDataSerializer
@@ -154,7 +154,7 @@ Deserializes string data to typed object.
 
 Interface for file operations with backup and recovery.
 
-**Namespace:** `ktsu.AppDataStorage.Interfaces`
+**Namespace:** `ktsu.AppData.Interfaces`
 
 ```csharp
 public interface IAppDataFileManager
@@ -191,7 +191,7 @@ Reads content from file with backup recovery.
 
 Interface for type-safe path generation.
 
-**Namespace:** `ktsu.AppDataStorage.Interfaces`
+**Namespace:** `ktsu.AppData.Interfaces`
 
 ```csharp
 public interface IAppDataPathProvider
@@ -230,7 +230,7 @@ Gets the base application data directory.
 
 Abstract base class for all application data models.
 
-**Namespace:** `ktsu.AppDataStorage`
+**Namespace:** `ktsu.AppData`
 
 ```csharp
 public abstract class AppData<T> : IDisposable where T : AppData<T>, new()
@@ -334,14 +334,14 @@ protected virtual void Dispose(bool disposing)
 
 ## ⚙️ Configuration
 
-### AppDataStorageOptions
+### AppDataOptions
 
 Configuration options for the AppData storage system.
 
-**Namespace:** `ktsu.AppDataStorage.Configuration`
+**Namespace:** `ktsu.AppData.Configuration`
 
 ```csharp
-public class AppDataStorageOptions
+public class AppDataOptions
 ```
 
 #### Properties
@@ -389,7 +389,7 @@ services.AddAppDataStorage(options =>
 
 Default implementation of `IAppDataRepository<T>`.
 
-**Namespace:** `ktsu.AppDataStorage.Implementation`
+**Namespace:** `ktsu.AppData.Implementations`
 
 ```csharp
 public class AppDataRepository<T> : IAppDataRepository<T> where T : class, new()
@@ -409,7 +409,7 @@ public AppDataRepository(
 
 Default JSON serialization implementation.
 
-**Namespace:** `ktsu.AppDataStorage.Implementation`
+**Namespace:** `ktsu.AppData.Implementations`
 
 ```csharp
 public class JsonAppDataSerializer : IAppDataSerializer
@@ -417,7 +417,7 @@ public class JsonAppDataSerializer : IAppDataSerializer
 
 **Constructor:**
 ```csharp
-public JsonAppDataSerializer(IOptions<AppDataStorageOptions> options)
+public JsonAppDataSerializer(JsonSerializerOptions? options = null)
 ```
 
 ---
@@ -426,7 +426,7 @@ public JsonAppDataSerializer(IOptions<AppDataStorageOptions> options)
 
 Default file management with backup and recovery.
 
-**Namespace:** `ktsu.AppDataStorage.Implementation`
+**Namespace:** `ktsu.AppData.Implementations`
 
 ```csharp
 public class DefaultAppDataFileManager : IAppDataFileManager
@@ -443,7 +443,7 @@ public DefaultAppDataFileManager(IFileSystem fileSystem)
 
 Default path provider using platform conventions.
 
-**Namespace:** `ktsu.AppDataStorage.Implementation`
+**Namespace:** `ktsu.AppData.Implementations`
 
 ```csharp
 public class DefaultAppDataPathProvider : IAppDataPathProvider
@@ -462,13 +462,13 @@ public DefaultAppDataPathProvider()
 
 Extension methods for service registration.
 
-**Namespace:** `ktsu.AppDataStorage.Configuration`
+**Namespace:** `ktsu.AppData.Configuration`
 
-#### AddAppDataStorage()
+#### AddAppData()
 ```csharp
-public static IServiceCollection AddAppDataStorage(
+public static IServiceCollection AddAppData(
     this IServiceCollection services,
-    Action<AppDataStorageOptions>? configureOptions = null)
+    Action<AppDataOptions>? configureOptions = null)
 ```
 
 Registers AppData services for production use.
@@ -479,7 +479,7 @@ Registers AppData services for production use.
 
 **Example:**
 ```csharp
-services.AddAppDataStorage(options =>
+services.AddAppData(options =>
 {
     options.JsonSerializerOptions = new JsonSerializerOptions
     {
@@ -488,12 +488,11 @@ services.AddAppDataStorage(options =>
 });
 ```
 
-#### AddAppDataStorageForTesting()
+#### AddAppDataForTesting()
 ```csharp
-public static IServiceCollection AddAppDataStorageForTesting(
+public static IServiceCollection AddAppDataForTesting(
     this IServiceCollection services,
-    Func<IFileSystem>? fileSystemFactory = null,
-    Action<AppDataStorageOptions>? configureOptions = null)
+    Func<IFileSystem> fileSystemFactory)
 ```
 
 Registers AppData services for testing with mock file system.
@@ -505,7 +504,7 @@ Registers AppData services for testing with mock file system.
 
 **Example:**
 ```csharp
-services.AddAppDataStorageForTesting(() => new MockFileSystem());
+services.AddAppDataForTesting(() => new MockFileSystem());
 ```
 
 ---
@@ -552,10 +551,10 @@ repository.Save(dataWithCircularReference);
 ```csharp
 // Program.cs
 using Microsoft.Extensions.DependencyInjection;
-using ktsu.AppDataStorage.Configuration;
+using ktsu.AppData.Configuration;
 
 var services = new ServiceCollection();
-services.AddAppDataStorage();
+services.AddAppData();
 services.AddTransient<IApplicationService, ApplicationService>();
 
 using var serviceProvider = services.BuildServiceProvider();

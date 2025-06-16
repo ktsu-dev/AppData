@@ -1,1 +1,1 @@
-Application data management library using JSON serialization to save and load data in the user's app data folder.
+Application data storage library for .NET that provides type-safe persistence with dependency injection support. Features automatic backup and recovery, debounced saves, mock file system support for testing, and cross-platform storage using the user's app data directory.

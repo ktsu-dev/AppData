@@ -44,7 +44,7 @@ High-level modules depend on abstractions, not concretions:
 ### DRY (Don't Repeat Yourself)
 - Generic `AppDataRepository<T>` eliminates repetition across data types
 - Base `AppData<T>` class provides common functionality
-- Shared configuration through `AppDataStorageOptions`
+- Shared configuration through `AppDataOptions`
 - Reusable service registration extensions
 
 ## 🏗️ Component Architecture
@@ -75,7 +75,7 @@ graph TB
     
     subgraph "Dependency Injection"
         DI[IServiceCollection<br/>Configuration]
-        OPTS[AppDataStorageOptions<br/>Settings]
+        OPTS[AppDataOptions<br/>Settings]
     end
     
     APP --> SVC
@@ -128,7 +128,7 @@ public abstract class AppData<T> : IDisposable where T : AppData<T>, new()
     
     // Debouncing mechanism
     private DateTime? lastQueueTime;
-    private static readonly TimeSpan SaveDebounceTime = TimeSpan.FromMilliseconds(100);
+    protected virtual TimeSpan SaveDebounceTime => TimeSpan.FromSeconds(3);
 }
 ```
 
@@ -370,9 +370,9 @@ var repository = new AppDataRepository<TestData>(
 ```csharp
 public static class AppDataServiceCollectionExtensions
 {
-    public static IServiceCollection AddAppDataStorage(
+    public static IServiceCollection AddAppData(
         this IServiceCollection services,
-        Action<AppDataStorageOptions>? configureOptions = null)
+        Action<AppDataOptions>? configureOptions = null)
     {
         // Configure options
         services.Configure(configureOptions ?? (_ => { }));
@@ -395,11 +395,12 @@ public static class AppDataServiceCollectionExtensions
 
 ### Options Pattern Implementation
 ```csharp
-public class AppDataStorageOptions
+public class AppDataOptions
 {
-    public JsonSerializerOptions JsonSerializerOptions { get; set; } = DefaultJsonOptions;
+    public JsonSerializerOptions? JsonSerializerOptions { get; set; }
     public Func<IServiceProvider, IFileSystem>? FileSystemFactory { get; set; }
-    public TimeSpan SaveDebounceTime { get; set; } = TimeSpan.FromMilliseconds(100);
+    public Func<IServiceProvider, IAppDataPathProvider>? PathProviderFactory { get; set; }
+    public Func<IServiceProvider, IAppDataSerializer>? SerializerFactory { get; set; }
 }
 ```
 
@@ -494,8 +495,8 @@ public class EncryptedFileManager : IAppDataFileManager
 ## 📋 Best Practices
 
 ### 1. Service Registration
-- Always use `AddAppDataStorage()` in production
-- Use `AddAppDataStorageForTesting()` in unit tests
+- Always use `AddAppData()` in production
+- Use `AddAppDataForTesting()` in unit tests
 - Configure options through the options pattern
 
 ### 2. Data Model Design
