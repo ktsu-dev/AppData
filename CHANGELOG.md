@@ -1,3 +1,8 @@
+## v1.0.2 (patch)
+
+Changes since v1.0.1:
+
+- Remove detailed XML documentation from AppData<T> ([@matt-edmondson](https://github.com/matt-edmondson))
 ## v1.0.1 (patch)
 
 Changes since v1.0.0:
