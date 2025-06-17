@@ -1170,6 +1170,21 @@ function New-Changelog {
     # Write latest version's changelog to separate file for GitHub releases
     $latestPath = if ($OutputPath) { Join-Path $OutputPath $LatestChangelogFile } else { $LatestChangelogFile }
     $latestVersionNotes = $latestVersionNotes.ReplaceLineEndings($script:lineEnding)
+    
+    # Ensure the latest changelog doesn't exceed NuGet's 35,000 character limit for ReleaseNotes
+    $maxReleaseNotesLength = 35000
+    if ($latestVersionNotes.Length -gt $maxReleaseNotesLength) {
+        Write-Information "Latest changelog ($($latestVersionNotes.Length) chars) exceeds NuGet limit ($maxReleaseNotesLength chars). Truncating..." -Tags "New-Changelog"
+        
+        # Calculate how much space we need for the truncation message
+        $truncationMessage = "$script:lineEnding$script:lineEnding... (content truncated due to NuGet 35,000 character limit)$script:lineEnding$script:lineEnding"
+        $availableLength = $maxReleaseNotesLength - $truncationMessage.Length
+        
+        # Truncate and add message
+        $latestVersionNotes = $latestVersionNotes.Substring(0, $availableLength) + $truncationMessage
+        Write-Information "Truncated latest changelog to $($latestVersionNotes.Length) characters" -Tags "New-Changelog"
+    }
+    
     [System.IO.File]::WriteAllText($latestPath, $latestVersionNotes, [System.Text.UTF8Encoding]::new($false)) | Write-InformationStream -Tags "New-Changelog"
     Write-Information "Latest version changelog saved to: $latestPath" -Tags "New-Changelog"
 
@@ -1239,7 +1254,17 @@ function Update-ProjectMetadata {
             $minimalChangelog += "Initial release or repository with no prior history.$($script:lineEnding)$($script:lineEnding)"
 
             [System.IO.File]::WriteAllText("CHANGELOG.md", $minimalChangelog, [System.Text.UTF8Encoding]::new($false)) | Write-InformationStream -Tags "Update-ProjectMetadata"
-            [System.IO.File]::WriteAllText($BuildConfiguration.LatestChangelogFile, $minimalChangelog, [System.Text.UTF8Encoding]::new($false)) | Write-InformationStream -Tags "Update-ProjectMetadata"
+            
+            # Ensure minimal changelog doesn't exceed NuGet limit (it shouldn't, but let's be safe)
+            $maxReleaseNotesLength = 35000
+            $latestMinimalChangelog = $minimalChangelog
+            if ($latestMinimalChangelog.Length -gt $maxReleaseNotesLength) {
+                $truncationMessage = "$($script:lineEnding)$($script:lineEnding)... (content truncated due to NuGet 35,000 character limit)$($script:lineEnding)$($script:lineEnding)"
+                $availableLength = $maxReleaseNotesLength - $truncationMessage.Length
+                $latestMinimalChangelog = $latestMinimalChangelog.Substring(0, $availableLength) + $truncationMessage
+            }
+            
+            [System.IO.File]::WriteAllText($BuildConfiguration.LatestChangelogFile, $latestMinimalChangelog, [System.Text.UTF8Encoding]::new($false)) | Write-InformationStream -Tags "Update-ProjectMetadata"
         }
 
         # Create AUTHORS.md if authors are provided
