@@ -1,5 +1,5 @@
-## v1.0.5 (patch)
+## v1.0.6 (patch)
 
-Changes since v1.0.4:
+Changes since v1.0.5:
 
-- Fix NuGet ReleaseNotes character limit issue by ensuring latest changelog is used ([@matt-edmondson](https://github.com/matt-edmondson))
+- Refactor PSBuild to correctly utilize LATEST_CHANGELOG.md for NuGet PackageReleaseNotes ([@matt-edmondson](https://github.com/matt-edmondson))
