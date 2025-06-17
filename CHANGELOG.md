@@ -1,3 +1,8 @@
+## v1.0.5 (patch)
+
+Changes since v1.0.4:
+
+- Fix NuGet ReleaseNotes character limit issue by ensuring latest changelog is used ([@matt-edmondson](https://github.com/matt-edmondson))
 ## v1.0.4 (patch)
 
 Changes since v1.0.3:
@@ -5,9 +10,7 @@ Changes since v1.0.3:
 - Implement truncation for NuGet ReleaseNotes in PSBuild script ([@matt-edmondson](https://github.com/matt-edmondson))
 ## v1.0.4-pre.1 (prerelease)
 
-Changes since v1.0.3:
-
-- Bump the ktsu group with 1 update ([@dependabot[bot]](https://github.com/dependabot[bot]))
+Incremental prerelease update.
 ## v1.0.3 (patch)
 
 Changes since v1.0.2:
