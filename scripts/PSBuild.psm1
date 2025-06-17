@@ -1170,21 +1170,6 @@ function New-Changelog {
     # Write latest version's changelog to separate file for GitHub releases
     $latestPath = if ($OutputPath) { Join-Path $OutputPath $LatestChangelogFile } else { $LatestChangelogFile }
     $latestVersionNotes = $latestVersionNotes.ReplaceLineEndings($script:lineEnding)
-    
-    # Ensure the latest changelog doesn't exceed NuGet's 35,000 character limit for ReleaseNotes
-    $maxReleaseNotesLength = 35000
-    if ($latestVersionNotes.Length -gt $maxReleaseNotesLength) {
-        Write-Information "Latest changelog ($($latestVersionNotes.Length) chars) exceeds NuGet limit ($maxReleaseNotesLength chars). Truncating..." -Tags "New-Changelog"
-        
-        # Calculate how much space we need for the truncation message
-        $truncationMessage = "$script:lineEnding$script:lineEnding... (content truncated due to NuGet 35,000 character limit)$script:lineEnding$script:lineEnding"
-        $availableLength = $maxReleaseNotesLength - $truncationMessage.Length
-        
-        # Truncate and add message
-        $latestVersionNotes = $latestVersionNotes.Substring(0, $availableLength) + $truncationMessage
-        Write-Information "Truncated latest changelog to $($latestVersionNotes.Length) characters" -Tags "New-Changelog"
-    }
-    
     [System.IO.File]::WriteAllText($latestPath, $latestVersionNotes, [System.Text.UTF8Encoding]::new($false)) | Write-InformationStream -Tags "New-Changelog"
     Write-Information "Latest version changelog saved to: $latestPath" -Tags "New-Changelog"
 
@@ -1254,17 +1239,7 @@ function Update-ProjectMetadata {
             $minimalChangelog += "Initial release or repository with no prior history.$($script:lineEnding)$($script:lineEnding)"
 
             [System.IO.File]::WriteAllText("CHANGELOG.md", $minimalChangelog, [System.Text.UTF8Encoding]::new($false)) | Write-InformationStream -Tags "Update-ProjectMetadata"
-            
-            # Ensure minimal changelog doesn't exceed NuGet limit (it shouldn't, but let's be safe)
-            $maxReleaseNotesLength = 35000
-            $latestMinimalChangelog = $minimalChangelog
-            if ($latestMinimalChangelog.Length -gt $maxReleaseNotesLength) {
-                $truncationMessage = "$($script:lineEnding)$($script:lineEnding)... (content truncated due to NuGet 35,000 character limit)$($script:lineEnding)$($script:lineEnding)"
-                $availableLength = $maxReleaseNotesLength - $truncationMessage.Length
-                $latestMinimalChangelog = $latestMinimalChangelog.Substring(0, $availableLength) + $truncationMessage
-            }
-            
-            [System.IO.File]::WriteAllText($BuildConfiguration.LatestChangelogFile, $latestMinimalChangelog, [System.Text.UTF8Encoding]::new($false)) | Write-InformationStream -Tags "Update-ProjectMetadata"
+            [System.IO.File]::WriteAllText($BuildConfiguration.LatestChangelogFile, $minimalChangelog, [System.Text.UTF8Encoding]::new($false)) | Write-InformationStream -Tags "Update-ProjectMetadata"
         }
 
         # Create AUTHORS.md if authors are provided
@@ -1295,6 +1270,11 @@ function Update-ProjectMetadata {
             "PROJECT_URL.url",
             "AUTHORS.url"
         )
+        
+        # Add latest changelog if it exists
+        if (Test-Path $BuildConfiguration.LatestChangelogFile) {
+            $filesToAdd += $BuildConfiguration.LatestChangelogFile
+        }
         Write-Information "Files to add: $($filesToAdd -join ", ")" -Tags "Update-ProjectMetadata"
         "git add $filesToAdd" | Invoke-ExpressionWithLogging | Write-InformationStream -Tags "Update-ProjectMetadata"
 
@@ -1491,13 +1471,16 @@ function Invoke-DotNetPack {
         The path to output packages to.
     .PARAMETER Project
         Optional specific project to package. If not provided, all projects are packaged.
+    .PARAMETER LatestChangelogFile
+        Optional path to the latest changelog file to use for PackageReleaseNotes. Defaults to "LATEST_CHANGELOG.md".
     #>
     [CmdletBinding()]
     param (
         [string]$Configuration = "Release",
         [Parameter(Mandatory=$true)]
         [string]$OutputPath,
-        [string]$Project = ""
+        [string]$Project = "",
+        [string]$LatestChangelogFile = "LATEST_CHANGELOG.md"
     )
 
     Write-StepHeader "Packaging Libraries" -Tags "Invoke-DotNetPack"
@@ -1513,19 +1496,31 @@ function Invoke-DotNetPack {
     }
 
     try {
+        # Prepare PackageReleaseNotes property if latest changelog exists
+        $releaseNotesProperty = ""
+        if (Test-Path $LatestChangelogFile) {
+            $releaseNotesContent = Get-Content $LatestChangelogFile -Raw -ErrorAction SilentlyContinue
+            if (-not [string]::IsNullOrWhiteSpace($releaseNotesContent)) {
+                # Escape quotes and special characters for MSBuild property
+                $escapedContent = $releaseNotesContent.Replace('"', '\"').Replace('`', '``')
+                $releaseNotesProperty = "-p:PackageReleaseNotes=`"$escapedContent`""
+                Write-Information "Using PackageReleaseNotes from $LatestChangelogFile ($($releaseNotesContent.Length) characters)" -Tags "Invoke-DotNetPack"
+            }
+        }
+
         # Build either a specific project or all projects
         if ([string]::IsNullOrWhiteSpace($Project)) {
             Write-Information "Packaging all projects in solution..." -Tags "Invoke-DotNetPack"
-            "dotnet pack --configuration $Configuration -logger:`"Microsoft.Build.Logging.ConsoleLogger,Microsoft.Build;Summary;ForceNoAlign;ShowTimestamp;ShowCommandLine;Verbosity=quiet`" --no-build --output $OutputPath" | Invoke-ExpressionWithLogging | Write-InformationStream -Tags "Invoke-DotNetPack"
+            "dotnet pack --configuration $Configuration -logger:`"Microsoft.Build.Logging.ConsoleLogger,Microsoft.Build;Summary;ForceNoAlign;ShowTimestamp;ShowCommandLine;Verbosity=quiet`" --no-build --output $OutputPath $releaseNotesProperty" | Invoke-ExpressionWithLogging | Write-InformationStream -Tags "Invoke-DotNetPack"
         } else {
             Write-Information "Packaging project: $Project" -Tags "Invoke-DotNetPack"
-            "dotnet pack $Project --configuration $Configuration -logger:`"Microsoft.Build.Logging.ConsoleLogger,Microsoft.Build;Summary;ForceNoAlign;ShowTimestamp;ShowCommandLine;Verbosity=quiet`" --no-build --output $OutputPath" | Invoke-ExpressionWithLogging | Write-InformationStream -Tags "Invoke-DotNetPack"
+            "dotnet pack $Project --configuration $Configuration -logger:`"Microsoft.Build.Logging.ConsoleLogger,Microsoft.Build;Summary;ForceNoAlign;ShowTimestamp;ShowCommandLine;Verbosity=quiet`" --no-build --output $OutputPath $releaseNotesProperty" | Invoke-ExpressionWithLogging | Write-InformationStream -Tags "Invoke-DotNetPack"
         }
 
         if ($LASTEXITCODE -ne 0) {
             # Get more details about what might have failed
             Write-Information "Packaging failed with exit code $LASTEXITCODE, trying again with detailed verbosity..." -Tags "Invoke-DotNetPack"
-            "dotnet pack --configuration $Configuration -logger:`"Microsoft.Build.Logging.ConsoleLogger,Microsoft.Build;Summary;ForceNoAlign;ShowTimestamp;ShowCommandLine;Verbosity=detailed`" --no-build --output $OutputPath" | Invoke-ExpressionWithLogging | Write-InformationStream -Tags "Invoke-DotNetPack"
+            "dotnet pack --configuration $Configuration -logger:`"Microsoft.Build.Logging.ConsoleLogger,Microsoft.Build;Summary;ForceNoAlign;ShowTimestamp;ShowCommandLine;Verbosity=detailed`" --no-build --output $OutputPath $releaseNotesProperty" | Invoke-ExpressionWithLogging | Write-InformationStream -Tags "Invoke-DotNetPack"
             throw "Library packaging failed with exit code $LASTEXITCODE"
         }
 
@@ -2195,8 +2190,8 @@ function Invoke-ReleaseWorkflow {
 
         # Create NuGet packages
         try {
-            Write-StepHeader "Packaging Libraries" -Tags "Invoke-DotNetPack"
-            Invoke-DotNetPack -Configuration $Configuration -OutputPath $BuildConfiguration.StagingPath | Write-InformationStream -Tags "Invoke-DotNetPack"
+                    Write-StepHeader "Packaging Libraries" -Tags "Invoke-DotNetPack"
+        Invoke-DotNetPack -Configuration $Configuration -OutputPath $BuildConfiguration.StagingPath -LatestChangelogFile $BuildConfiguration.LatestChangelogFile | Write-InformationStream -Tags "Invoke-DotNetPack"
 
             # Add package paths if they exist
             if (Test-Path $BuildConfiguration.PackagePattern) {
