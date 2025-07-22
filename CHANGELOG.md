@@ -1,8 +1,8 @@
-## v1.0.7-pre.2 (prerelease)
+## v1.0.7 (patch)
 
-Changes since v1.0.7-pre.1:
+Changes since v1.0.6:
 
-- Bump the microsoft group with 2 updates ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- Refactor AppData to use FileSystemProvider ([@matt-edmondson](https://github.com/matt-edmondson))
 ## v1.0.7-pre.2 (prerelease)
 
 Changes since v1.0.7-pre.1:
