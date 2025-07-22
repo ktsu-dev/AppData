@@ -3,11 +3,10 @@
     <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="ktsu.FileSystemProvider" />
     <PackageReference Include="ktsu.RoundTripStringJsonConverter" />
     <PackageReference Include="ktsu.CaseConverter" />
     <PackageReference Include="ktsu.Semantics" />
-    <PackageReference Include="TestableIO.System.IO.Abstractions" />
-    <PackageReference Include="TestableIO.System.IO.Abstractions.Wrappers" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
 </Project>

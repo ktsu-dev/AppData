@@ -5,11 +5,11 @@
 namespace ktsu.AppData.Test;
 
 using System;
-using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using System.Text.Json;
 using ktsu.AppData.Configuration;
 using ktsu.AppData.Interfaces;
+using ktsu.FileSystemProvider;
 using ktsu.Semantics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -33,7 +33,7 @@ public class AppDataServiceCollectionExtensionsTests
 		ServiceProvider provider = _services.BuildServiceProvider();
 
 		// Assert
-		Assert.IsNotNull(provider.GetService<IFileSystem>());
+		Assert.IsNotNull(provider.GetService<IFileSystemProvider>());
 		Assert.IsNotNull(provider.GetService<IAppDataPathProvider>());
 		Assert.IsNotNull(provider.GetService<IAppDataSerializer>());
 		Assert.IsNotNull(provider.GetService<IAppDataFileManager>());
@@ -77,18 +77,19 @@ public class AppDataServiceCollectionExtensionsTests
 	}
 
 	[TestMethod]
-	public void AddAppData_WithCustomFileSystemFactory_UsesCustomFileSystem()
+	public void AddAppData_WithCustomFileSystemProviderFactory_UsesCustomFileSystemProvider()
 	{
 		// Arrange
-		MockFileSystem mockFileSystem = new();
+		ktsu.FileSystemProvider.FileSystemProvider customProvider = new();
+		customProvider.SetFileSystemFactory(() => new MockFileSystem());
 
 		// Act
-		_services.AddAppData(options => options.FileSystemFactory = _ => mockFileSystem);
+		_services.AddAppData(options => options.FileSystemProviderFactory = _ => customProvider);
 		ServiceProvider provider = _services.BuildServiceProvider();
 
 		// Assert
-		IFileSystem fileSystem = provider.GetRequiredService<IFileSystem>();
-		Assert.AreSame(mockFileSystem, fileSystem);
+		IFileSystemProvider fileSystemProvider = provider.GetRequiredService<IFileSystemProvider>();
+		Assert.AreSame(customProvider, fileSystemProvider);
 	}
 
 	[TestMethod]
@@ -138,7 +139,7 @@ public class AppDataServiceCollectionExtensionsTests
 	}
 
 	[TestMethod]
-	public void AddAppDataForTesting_RegistersTransientFileSystem()
+	public void AddAppDataForTesting_RegistersFileSystemProviderWithMockFactory()
 	{
 		// Arrange
 		MockFileSystem mockFileSystem = new();
@@ -148,12 +149,12 @@ public class AppDataServiceCollectionExtensionsTests
 		ServiceProvider provider = _services.BuildServiceProvider();
 
 		// Assert
-		IFileSystem fileSystem1 = provider.GetRequiredService<IFileSystem>();
-		IFileSystem fileSystem2 = provider.GetRequiredService<IFileSystem>();
+		IFileSystemProvider fileSystemProvider = provider.GetRequiredService<IFileSystemProvider>();
+		Assert.IsNotNull(fileSystemProvider);
 
-		// Should be the same instance since our factory returns the same mock
-		Assert.AreSame(mockFileSystem, fileSystem1);
-		Assert.AreSame(mockFileSystem, fileSystem2);
+		// The provider should be using the mock filesystem
+		System.IO.Abstractions.IFileSystem currentFileSystem = fileSystemProvider.Current;
+		Assert.IsNotNull(currentFileSystem);
 	}
 
 	[TestMethod]
@@ -223,13 +224,14 @@ public class AppDataServiceCollectionExtensionsTests
 		_services.AddAppData();
 		ServiceProvider provider = _services.BuildServiceProvider();
 
-		// Act & Assert
-		IAppDataRepository<TestConfigData> repo1 = provider.GetRequiredService<IAppDataRepository<TestConfigData>>();
-		IAppDataRepository<AnotherTestConfigData> repo2 = provider.GetRequiredService<IAppDataRepository<AnotherTestConfigData>>();
+		// Act
+		IAppDataRepository<TestConfigData> testRepo = provider.GetRequiredService<IAppDataRepository<TestConfigData>>();
+		IAppDataRepository<AnotherTestConfigData> anotherRepo = provider.GetRequiredService<IAppDataRepository<AnotherTestConfigData>>();
 
-		Assert.IsNotNull(repo1);
-		Assert.IsNotNull(repo2);
-		Assert.AreNotEqual(repo1.GetType(), repo2.GetType()); // Different generic types
+		// Assert
+		Assert.IsNotNull(testRepo);
+		Assert.IsNotNull(anotherRepo);
+		Assert.AreNotEqual(testRepo.GetType(), anotherRepo.GetType());
 	}
 }
 

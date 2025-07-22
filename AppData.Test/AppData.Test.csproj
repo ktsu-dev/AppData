@@ -1,12 +1,8 @@
 ﻿<Project Sdk="ktsu.Sdk.Test">
 
-  <PropertyGroup>
-    <NoWarn>$(NoWarn)</NoWarn>
-  </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="TestableIO.System.IO.Abstractions.TestingHelpers" />
     <PackageReference Include="Moq" />
+    <PackageReference Include="TestableIO.System.IO.Abstractions.TestingHelpers" />
   </ItemGroup>
 
 </Project>

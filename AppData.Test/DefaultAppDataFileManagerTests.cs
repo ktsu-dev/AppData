@@ -8,6 +8,7 @@ using System;
 using System.IO.Abstractions.TestingHelpers;
 using ktsu.AppData.Implementations;
 using ktsu.AppData.Interfaces;
+using ktsu.FileSystemProvider;
 using ktsu.Semantics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -15,16 +16,23 @@ using Moq;
 [TestClass]
 public class DefaultAppDataFileManagerTests
 {
-	private MockFileSystem? _mockFileSystem;
+	private FileSystemProvider? _fileSystemProvider;
 	private Mock<IAppDataPathProvider>? _mockPathProvider;
 	private DefaultAppDataFileManager? _fileManager;
 
 	[TestInitialize]
 	public void Setup()
 	{
-		_mockFileSystem = new MockFileSystem();
+		_fileSystemProvider = new FileSystemProvider();
+		_fileSystemProvider.SetFileSystemFactory(() => new MockFileSystem());
 		_mockPathProvider = new Mock<IAppDataPathProvider>();
-		_fileManager = new DefaultAppDataFileManager(_mockFileSystem, _mockPathProvider.Object);
+		_fileManager = new DefaultAppDataFileManager(_fileSystemProvider, _mockPathProvider.Object);
+	}
+
+	[TestCleanup]
+	public void Cleanup()
+	{
+		_fileSystemProvider?.ResetToDefault();
 	}
 
 	[TestMethod]
@@ -35,7 +43,7 @@ public class DefaultAppDataFileManagerTests
 	}
 
 	[TestMethod]
-	public void Constructor_WithNullFileSystem_ThrowsArgumentNullException()
+	public void Constructor_WithNullFileSystemProvider_ThrowsArgumentNullException()
 	{
 		// Act & Assert
 		Assert.ThrowsException<ArgumentNullException>(() =>
@@ -47,7 +55,7 @@ public class DefaultAppDataFileManagerTests
 	{
 		// Act & Assert
 		Assert.ThrowsException<ArgumentNullException>(() =>
-			new DefaultAppDataFileManager(_mockFileSystem!, null!));
+			new DefaultAppDataFileManager(_fileSystemProvider!, null!));
 	}
 
 	[TestMethod]
@@ -66,8 +74,9 @@ public class DefaultAppDataFileManagerTests
 		_fileManager!.WriteText(filePath, content);
 
 		// Assert
-		Assert.IsTrue(_mockFileSystem!.File.Exists(filePath.ToString()));
-		Assert.AreEqual(content, _mockFileSystem.File.ReadAllText(filePath.ToString()));
+		System.IO.Abstractions.IFileSystem fileSystem = _fileSystemProvider!.Current;
+		Assert.IsTrue(fileSystem.File.Exists(filePath.ToString()));
+		Assert.AreEqual(content, fileSystem.File.ReadAllText(filePath.ToString()));
 	}
 
 	[TestMethod]
@@ -84,14 +93,16 @@ public class DefaultAppDataFileManagerTests
 		_mockPathProvider.Setup(p => p.MakeBackupFilePath(filePath)).Returns(backupPath);
 
 		// Create original file
-		_mockFileSystem!.AddFile(filePath.ToString(), new MockFileData(originalContent));
+		MockFileSystem mockFileSystem = (MockFileSystem)_fileSystemProvider!.Current;
+		mockFileSystem.AddFile(filePath.ToString(), new MockFileData(originalContent));
 
 		// Act
 		_fileManager!.WriteText(filePath, newContent);
 
 		// Assert
-		Assert.IsTrue(_mockFileSystem.File.Exists(filePath.ToString()));
-		Assert.AreEqual(newContent, _mockFileSystem.File.ReadAllText(filePath.ToString()));
+		System.IO.Abstractions.IFileSystem fileSystem = _fileSystemProvider.Current;
+		Assert.IsTrue(fileSystem.File.Exists(filePath.ToString()));
+		Assert.AreEqual(newContent, fileSystem.File.ReadAllText(filePath.ToString()));
 	}
 
 	[TestMethod]
@@ -120,7 +131,8 @@ public class DefaultAppDataFileManagerTests
 		AbsoluteFilePath filePath = @"C:\test\data.txt".As<AbsoluteFilePath>();
 		string expectedContent = "test content";
 
-		_mockFileSystem!.AddFile(filePath.ToString(), new MockFileData(expectedContent));
+		MockFileSystem mockFileSystem = (MockFileSystem)_fileSystemProvider!.Current;
+		mockFileSystem.AddFile(filePath.ToString(), new MockFileData(expectedContent));
 
 		// Act
 		string result = _fileManager!.ReadText(filePath);
@@ -163,7 +175,8 @@ public class DefaultAppDataFileManagerTests
 		_fileManager!.EnsureDirectoryExists(filePath);
 
 		// Assert
-		Assert.IsTrue(_mockFileSystem!.Directory.Exists(@"C:\test\subdir"));
+		System.IO.Abstractions.IFileSystem fileSystem = _fileSystemProvider!.Current;
+		Assert.IsTrue(fileSystem.Directory.Exists(@"C:\test\subdir"));
 	}
 
 	[TestMethod]
@@ -176,6 +189,7 @@ public class DefaultAppDataFileManagerTests
 		_fileManager!.EnsureDirectoryExists(directoryPath);
 
 		// Assert
-		Assert.IsTrue(_mockFileSystem!.Directory.Exists(directoryPath.ToString()));
+		System.IO.Abstractions.IFileSystem fileSystem = _fileSystemProvider!.Current;
+		Assert.IsTrue(fileSystem.Directory.Exists(directoryPath.ToString()));
 	}
 }

@@ -4,10 +4,10 @@
 
 namespace ktsu.AppData.Configuration;
 
-using System.IO.Abstractions;
 using System.Text.Json;
 using ktsu.AppData.Implementations;
 using ktsu.AppData.Interfaces;
+using ktsu.FileSystemProvider;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
@@ -38,18 +38,15 @@ public static class AppDataServiceCollectionExtensions
 		AppDataOptions options = new();
 		configureOptions(options);
 
-		// Register core services
-		// Use Transient for testing to ensure each operation gets its own filesystem instance
-		// Use Singleton for production to share the same instance across the application
-		if (options.FileSystemFactory is not null)
+		// Register FileSystemProvider
+		if (options.FileSystemProviderFactory is not null)
 		{
-			// Testing scenario - use Transient to create new instances for each request
-			services.AddTransient(options.FileSystemFactory);
+			services.AddSingleton(options.FileSystemProviderFactory);
 		}
 		else
 		{
-			// Production scenario - use Singleton for efficiency
-			services.AddSingleton<IFileSystem>(_ => new FileSystem());
+			// Register FileSystemProvider using the extension method
+			services.AddFileSystemProvider();
 		}
 
 		services.AddSingleton(sp =>
@@ -83,18 +80,27 @@ public static class AppDataServiceCollectionExtensions
 	/// <param name="fileSystemFactory">Factory function to create test file system instances. This will be called for each request to ensure test isolation.</param>
 	/// <returns>The service collection for chaining.</returns>
 	/// <remarks>
-	/// This method configures the AppData library for testing by using Transient lifetime for the file system,
-	/// ensuring that each async operation or test gets its own isolated mock file system instance.
+	/// This method configures the AppData library for testing by setting up a FileSystemProvider
+	/// with a custom factory that creates mock file systems for testing purposes.
+	/// This ensures that each async operation or test gets its own isolated mock file system instance.
 	/// This prevents test interference and ensures proper concurrent test execution.
 	/// </remarks>
 	public static IServiceCollection AddAppDataForTesting(
 		this IServiceCollection services,
-		Func<IFileSystem> fileSystemFactory)
+		Func<System.IO.Abstractions.IFileSystem> fileSystemFactory)
 	{
 		ArgumentNullException.ThrowIfNull(services);
 		ArgumentNullException.ThrowIfNull(fileSystemFactory);
 
-		return services.AddAppData(options => options.FileSystemFactory = _ => fileSystemFactory());
+		return services.AddAppData(options =>
+		{
+			options.FileSystemProviderFactory = serviceProvider =>
+			{
+				FileSystemProvider provider = new();
+				provider.SetFileSystemFactory(fileSystemFactory);
+				return provider;
+			};
+		});
 	}
 }
 
@@ -104,9 +110,9 @@ public static class AppDataServiceCollectionExtensions
 public sealed class AppDataOptions
 {
 	/// <summary>
-	/// Gets or sets the factory function for creating file system instances.
+	/// Gets or sets the factory function for creating file system provider instances.
 	/// </summary>
-	public Func<IServiceProvider, IFileSystem>? FileSystemFactory { get; set; }
+	public Func<IServiceProvider, IFileSystemProvider>? FileSystemProviderFactory { get; set; }
 
 	/// <summary>
 	/// Gets or sets the factory function for creating path provider instances.

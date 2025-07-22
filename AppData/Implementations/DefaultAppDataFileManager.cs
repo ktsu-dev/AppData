@@ -4,8 +4,8 @@
 
 namespace ktsu.AppData.Implementations;
 
-using System.IO.Abstractions;
 using ktsu.AppData.Interfaces;
+using ktsu.FileSystemProvider;
 using ktsu.Semantics;
 using IPath = Semantics.IPath;
 
@@ -15,11 +15,11 @@ using IPath = Semantics.IPath;
 /// <remarks>
 /// Initializes a new instance of the <see cref="DefaultAppDataFileManager"/> class.
 /// </remarks>
-/// <param name="fileSystem">The file system abstraction to use.</param>
+/// <param name="fileSystemProvider">The file system provider to use.</param>
 /// <param name="pathProvider">The path provider to use for creating backup and temp paths.</param>
-public sealed class DefaultAppDataFileManager(IFileSystem fileSystem, IAppDataPathProvider pathProvider) : IAppDataFileManager
+public sealed class DefaultAppDataFileManager(IFileSystemProvider fileSystemProvider, IAppDataPathProvider pathProvider) : IAppDataFileManager
 {
-	private readonly IFileSystem _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+	private readonly IFileSystemProvider _fileSystemProvider = fileSystemProvider ?? throw new ArgumentNullException(nameof(fileSystemProvider));
 	private readonly IAppDataPathProvider _pathProvider = pathProvider ?? throw new ArgumentNullException(nameof(pathProvider));
 
 	/// <inheritdoc/>
@@ -33,17 +33,19 @@ public sealed class DefaultAppDataFileManager(IFileSystem fileSystem, IAppDataPa
 		AbsoluteFilePath tempFilePath = _pathProvider.MakeTempFilePath(filePath);
 		AbsoluteFilePath backupFilePath = _pathProvider.MakeBackupFilePath(filePath);
 
+		System.IO.Abstractions.IFileSystem fileSystem = _fileSystemProvider.Current;
+
 		// Write to temporary file first
-		_fileSystem.File.WriteAllText(tempFilePath, content);
+		fileSystem.File.WriteAllText(tempFilePath, content);
 
 		try
 		{
 			// Create backup of existing file
-			_fileSystem.File.Delete(backupFilePath);
-			if (_fileSystem.File.Exists(filePath))
+			fileSystem.File.Delete(backupFilePath);
+			if (fileSystem.File.Exists(filePath))
 			{
-				_fileSystem.File.Copy(filePath, backupFilePath);
-				_fileSystem.File.Delete(filePath);
+				fileSystem.File.Copy(filePath, backupFilePath);
+				fileSystem.File.Delete(filePath);
 			}
 		}
 		catch (FileNotFoundException)
@@ -52,12 +54,12 @@ public sealed class DefaultAppDataFileManager(IFileSystem fileSystem, IAppDataPa
 		}
 
 		// Move temp file to final location
-		_fileSystem.File.Move(tempFilePath, filePath);
+		fileSystem.File.Move(tempFilePath, filePath);
 
 		// Clean up backup file
-		if (_fileSystem.File.Exists(backupFilePath))
+		if (fileSystem.File.Exists(backupFilePath))
 		{
-			_fileSystem.File.Delete(backupFilePath);
+			fileSystem.File.Delete(backupFilePath);
 		}
 	}
 
@@ -68,18 +70,20 @@ public sealed class DefaultAppDataFileManager(IFileSystem fileSystem, IAppDataPa
 
 		EnsureDirectoryExists(filePath);
 
+		System.IO.Abstractions.IFileSystem fileSystem = _fileSystemProvider.Current;
+
 		try
 		{
-			return _fileSystem.File.ReadAllText(filePath);
+			return fileSystem.File.ReadAllText(filePath);
 		}
 		catch (FileNotFoundException)
 		{
 			// Try to recover from backup
 			AbsoluteFilePath backupFilePath = _pathProvider.MakeBackupFilePath(filePath);
-			if (_fileSystem.File.Exists(backupFilePath))
+			if (fileSystem.File.Exists(backupFilePath))
 			{
 				// Restore from backup
-				_fileSystem.File.Copy(backupFilePath, filePath);
+				fileSystem.File.Copy(backupFilePath, filePath);
 
 				// Create timestamped backup
 				CreateTimestampedBackup(backupFilePath);
@@ -102,7 +106,7 @@ public sealed class DefaultAppDataFileManager(IFileSystem fileSystem, IAppDataPa
 			? dirPath.AsAbsolute()
 			: throw new InvalidOperationException("Path is not a file or directory path.");
 
-		_fileSystem.Directory.CreateDirectory(directoryPath.AsAbsolute());
+		_fileSystemProvider.Current.Directory.CreateDirectory(directoryPath.AsAbsolute());
 	}
 
 	/// <summary>
@@ -111,16 +115,17 @@ public sealed class DefaultAppDataFileManager(IFileSystem fileSystem, IAppDataPa
 	/// <param name="backupFilePath">The original backup file path.</param>
 	private void CreateTimestampedBackup(AbsoluteFilePath backupFilePath)
 	{
+		System.IO.Abstractions.IFileSystem fileSystem = _fileSystemProvider.Current;
 		string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 		AbsoluteFilePath timestampedBackup = backupFilePath.WithSuffix($".{timestamp}");
 		int counter = 0;
 
-		while (_fileSystem.File.Exists(timestampedBackup))
+		while (fileSystem.File.Exists(timestampedBackup))
 		{
 			counter++;
 			timestampedBackup = backupFilePath.WithSuffix($".{timestamp}_{counter}");
 		}
 
-		_fileSystem.File.Move(backupFilePath, timestampedBackup);
+		fileSystem.File.Move(backupFilePath, timestampedBackup);
 	}
 }
