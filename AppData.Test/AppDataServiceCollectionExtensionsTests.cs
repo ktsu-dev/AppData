@@ -80,7 +80,7 @@ public class AppDataServiceCollectionExtensionsTests
 	public void AddAppData_WithCustomFileSystemProviderFactory_UsesCustomFileSystemProvider()
 	{
 		// Arrange
-		ktsu.FileSystemProvider.FileSystemProvider customProvider = new();
+		FileSystemProvider customProvider = new();
 		customProvider.SetFileSystemFactory(() => new MockFileSystem());
 
 		// Act
